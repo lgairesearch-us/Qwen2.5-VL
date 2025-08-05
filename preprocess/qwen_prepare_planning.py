@@ -4,7 +4,7 @@ import os
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from functools import partial
 import json
-from auto_eval.parse_trajectory import parse_trajectory
+from parse_trajectory import parse_trajectory
 import base64
 import io
 import traceback
@@ -55,7 +55,7 @@ def process_trajectory(instance, image_dir, target_dims, max_pixels):
                         print('Error parsing next action')
                         # print(planner_action)
                         # print(raw_action)
-                        # print(step['Predict Action'])
+                        print(step['Predict Action'])
                         continue
 
             past_actions.append(next_action)
@@ -108,13 +108,15 @@ def parse_args():
     import argparse
     parser = argparse.ArgumentParser(description='Prepare WebVoyager data for Qwen model training')
     parser.add_argument('--output_dir', type=str, help='Directory to save processed data')
-    parser.add_argument('--csv_path', type=str, help='Path to the data')
+    parser.add_argument('--data_dirs', type=str, nargs='+', help='Paths to the data directories')
     parser.add_argument('--target_width', type=int, default=1288,
                         help='Target width for processed images')
     parser.add_argument('--target_height', type=int, default=2044,
                         help='Target height for processed images')
     parser.add_argument('--max_pixels', type=int, default=3000000,
                         help='Maximum number of pixels in the image (width * height)')
+    parser.add_argument('--success_only', action='store_true',
+                        help='Only include instances where auto_eval_res == 1 (successful evaluations)')
     return parser.parse_args()
 
 args = parse_args()
@@ -126,15 +128,56 @@ os.makedirs(image_dir, exist_ok=True)
 target_dims = [args.target_width, args.target_height]
 training_instances = []
 
-df = pd.read_csv(args.csv_path)
-# filtered_df = df[df['auto_eval_res'] == 1]
-filtered_df = df
-data = filtered_df.to_dict('records')
-print(f"Loaded {len(data)} instances with auto_eval_res == 1")
+# Process multiple data directories
+all_data = []
+for data_dir in args.data_dirs:
+    if args.success_only:
+        # Look for CSV files starting with 'evaluation' in the directory
+        csv_files = [f for f in os.listdir(data_dir) if f.startswith('evaluation') and f.endswith('.csv')]
+
+        if not csv_files:
+            print(f"No evaluation CSV files found in directory: {data_dir}")
+            continue
+
+        # Get the most recent CSV file based on modification time
+        csv_paths = [os.path.join(data_dir, f) for f in csv_files]
+        most_recent_csv = max(csv_paths, key=os.path.getmtime)
+        print(f"Processing most recent evaluation CSV file: {most_recent_csv}")
+
+        try:
+            df = pd.read_csv(most_recent_csv)
+            filtered_df = df[df['auto_eval_res'] == 1]
+            print(f"Filtered to {len(filtered_df)} successful instances from {len(df)} total instances")
+            data = filtered_df.to_dict('records')
+            all_data.extend(data)
+            print(f"Loaded {len(data)} instances from {most_recent_csv}")
+        except Exception as e:
+            print(f"Error processing {most_recent_csv}: {e}")
+            continue
+    else:
+        # Read eval_results.csv file
+        eval_results_path = os.path.join(data_dir, 'eval_results.csv')
+
+        if not os.path.exists(eval_results_path):
+            print(f"eval_results.csv not found in directory: {data_dir}")
+            continue
+
+        print(f"Processing eval_results.csv: {eval_results_path}")
+
+        try:
+            df = pd.read_csv(eval_results_path)
+            data = df.to_dict('records')
+            all_data.extend(data)
+            print(f"Loaded {len(data)} instances from {eval_results_path}")
+        except Exception as e:
+            print(f"Error processing {eval_results_path}: {e}")
+            continue
+
+print(f"Total instances loaded: {len(all_data)}")
 
 with ProcessPoolExecutor() as executor:
     process_func = partial(process_trajectory, image_dir=image_dir, target_dims=target_dims, max_pixels=args.max_pixels)
-    futures = [executor.submit(process_func, instance) for instance in data]
+    futures = [executor.submit(process_func, instance) for instance in all_data]
 
     for future in tqdm(as_completed(futures), total=len(futures)):
         result = future.result()
