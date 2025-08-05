@@ -26,7 +26,7 @@ VIDEOCHATGPT = {
     "data_path": "PATH_TO_VIDEOCHATGPT_DATA",
 }
 PLANNING = {
-    "annotation_path": "/mnt/ssd-ex-1/llajan/VisualWebAgent/dynamic_train/train.json",
+    "annotation_path": "qwen-vl-finetune/demo/train.json",
     "data_path": "",
 }
 data_dict = {
