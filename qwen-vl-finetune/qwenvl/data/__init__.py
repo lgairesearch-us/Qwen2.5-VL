@@ -25,13 +25,17 @@ VIDEOCHATGPT = {
     "annotation_path": "PATH_TO_VIDEOCHATGPT_ANNOTATION",
     "data_path": "PATH_TO_VIDEOCHATGPT_DATA",
 }
-
+PLANNING = {
+    "annotation_path": "/mnt/ssd-ex-1/llajan/VisualWebAgent/dynamic_train/train.json",
+    "data_path": "",
+}
 data_dict = {
     "cambrian_737k": CAMBRIAN_737K,
     "cambrian_737k_pack": CAMBRIAN_737K_PACK,
     "mp_doc": MP_DOC,
     "clevr_mc": CLEVR_MC,
     "videochatgpt": VIDEOCHATGPT,
+    "planning": PLANNING,
 }
 
 
