@@ -21,7 +21,7 @@ NNODES=${WORLD_SIZE:-1}
 deepspeed=qwen-vl-finetune/scripts/zero3.json
 
 # Model configuration
-llm=Qwen/Qwen2.5-VL-32B-Instruct  # Using HuggingFace model ID
+llm=Qwen/Qwen2.5-VL-72B-Instruct  # Using HuggingFace model ID
 
 # Training hyperparameters
 lr=2e-7
@@ -35,8 +35,8 @@ entry_file=qwen-vl-finetune/qwenvl/train/train_qwen.py
 datasets=planning
 
 # Output configuration
-run_name=qwenvl32b_sft_lr2e-7_bs2_grad8_planning
-output_dir=qwenvl32b_sft_lr2e-7_bs2_grad8_planning
+run_name=qwenvl72b_sft_lr2e-7_bs2_grad8_planning
+output_dir=qwenvl72b_sft_lr2e-7_bs2_grad8_planning
 
 # Activate conda environment
 conda activate qwenvl

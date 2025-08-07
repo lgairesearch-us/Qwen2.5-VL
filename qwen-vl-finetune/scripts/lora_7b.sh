@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --job-name=qwen-vl-sft
+#SBATCH --job-name=qwen-vl-lora
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=48
@@ -8,35 +8,38 @@
 #SBATCH --mem=500G
 #SBATCH --time=48:00:00
 #SBATCH --partition=all
-#SBATCH --output=qwen_sft_%j.out
-#SBATCH --error=qwen_sft_%j.err
+#SBATCH --output=qwen_lora_%j.out
+#SBATCH --error=qwen_lora_%j.err
 #SBATCH --qos=low
 
-# Distributed training configuration
-MASTER_ADDR=${MASTER_ADDR:-"127.0.0.1"}
-MASTER_PORT=${MASTER_PORT:-$(shuf -i 20001-29999 -n 1)}
-NNODES=${WORLD_SIZE:-1}
+# Use SLURM environment for GPU count
+NPROC_PER_NODE=${SLURM_GPUS_PER_NODE:-$(nvidia-smi --list-gpus | wc -l)}
+
+# Distributed training configuration for single node
+MASTER_ADDR="127.0.0.1"
+MASTER_PORT=$(shuf -i 20001-29999 -n 1)
+NNODES=1
 
 # DeepSpeed configuration
 deepspeed=qwen-vl-finetune/scripts/zero3.json
 
 # Model configuration
-llm=Qwen/Qwen2.5-VL-32B-Instruct  # Using HuggingFace model ID
+llm=Qwen/Qwen2.5-VL-7B-Instruct  # Using HuggingFace model ID
 
 # Training hyperparameters
-lr=2e-7
-batch_size=2
-grad_accum_steps=8
+lr=1e-4
+batch_size=1
+grad_accum_steps=4
 
 # Training entry point
-entry_file=qwen-vl-finetune/qwenvl/train/train_qwen.py
+entry_file=qwen-vl-finetune/qwenvl/train/train_qwen_lora.py
 
 # Dataset configuration (replace with public dataset names)
 datasets=planning
 
 # Output configuration
-run_name=qwenvl32b_sft_lr2e-7_bs2_grad8_planning
-output_dir=qwenvl32b_sft_lr2e-7_bs2_grad8_planning
+run_name=qwenvl7b_lora_lr1e-4_bs1_grad4_planning
+output_dir=qwenvl7b_lora_lr1e-4_bs1_grad4_planning
 
 # Activate conda environment
 conda activate qwenvl
@@ -60,8 +63,8 @@ args="
     --min_pixels 784 \
     --eval_strategy "no" \
     --save_strategy "steps" \
-    --save_steps 1000 \
-    --save_total_limit 3 \
+    --save_steps 100 \
+    --save_total_limit 10 \
     --learning_rate ${lr} \
     --weight_decay 0 \
     --warmup_ratio 0.03 \
