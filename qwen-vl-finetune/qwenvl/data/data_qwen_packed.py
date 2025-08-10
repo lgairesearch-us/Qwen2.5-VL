@@ -19,7 +19,7 @@ import torch
 from torch.utils.data import Dataset
 from PIL import Image
 from decord import VideoReader
-from torchcodec.decoders import VideoDecoder
+# from torchcodec.decoders import VideoDecoder
 import transformers
 
 from . import data_list
@@ -506,13 +506,13 @@ class LazySupervisedDataset(Dataset):
                 "position_ids": position_ids,
                 "attention_mask": attention_mask if attention_mask else None
             }
-            
+
             if any("pixel_values" in d for d in data_list):
                 new_data_dict.update({
                     "pixel_values": torch.cat([d["pixel_values"] for d in data_list if "pixel_values" in d], dim=0),
                     "image_grid_thw": torch.cat([d["image_grid_thw"] for d in data_list if "image_grid_thw" in d], dim=0)
                 })
-            
+
             if any("pixel_values_videos" in d for d in data_list):
                 new_data_dict.update({
                     "pixel_values_videos": torch.cat([d["pixel_values_videos"] for d in data_list if "pixel_values_videos" in d], dim=0),

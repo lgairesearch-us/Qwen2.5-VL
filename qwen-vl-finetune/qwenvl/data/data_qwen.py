@@ -19,7 +19,7 @@ import torch
 from torch.utils.data import Dataset
 from PIL import Image
 from decord import VideoReader
-from torchcodec.decoders import VideoDecoder
+# from torchcodec.decoders import VideoDecoder
 import transformers
 
 from . import data_list
