@@ -2,7 +2,6 @@
 ```
 conda create --name qwenvl python=3.11
 pip install -r qwen-vl-finetune/requirements.txt
-pip install flash_attn
 ```
 
 ## Training
